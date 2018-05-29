@@ -1,45 +1,37 @@
 const express = require('express');
-
 const mongoose = require('mongoose');
-
 const bodyParser = require('body-parser');
-
-
-
 const app = express();
 const port = process.env.PORT || 8080;
 
+var router = require('./myshop_api/controllers/router');
 
-mongoose.connect('mongodb://alvnl:123yo@ds161539.mlab.com:61539/guestbook');
+var passport = require('passport');
+require('./myshop_api/config/passport');
+
+
+
+mongoose.connect('mongodb://alvnl:123yo@ds121730.mlab.com:21730/myshop');
 
 const Comment = mongoose.model('Comment',{name:String, term: String});
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
-app.get('/api/hello', (req, res) => {
-  console.log('hello!!');
-  res.send({ express: 'Hello From Express' });
+app.use(passport.initialize());
+
+app.use('/',router);
+
+// error handlers
+// Catch unauthorised errors
+app.use(function (err, req, res, next) {
+  if (err.name === 'UnauthorizedError') {
+    res.status(401);
+    res.json({"message" : err.name + ": " + err.message});
+  }
 });
 
 
-app.post('/post', (req, res) => {
-  // console.log(req);
-  const comment = new Comment({name:req.body.comment.name, term:req.body.comment.term});
-  comment.save().then(()=>console.log('posted up!!!!'));
-  res.send({ express: 'Posted' });
 
-});
-
-app.get('/comments', (req, res) => {
-  // console.log(req);
-  Comment.find(function(err,comments){
-    console.log(comments);
-    if(err){
-      return console.error(err);
-    }
-    return res.send(comments.reverse());
-  });
-});
 
 app.listen(port, () => console.log(`Listening on port ${port}`));
